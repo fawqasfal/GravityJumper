@@ -7,6 +7,10 @@ import com.mygdx.gravity.MainGravity;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+		config.title = "MEGA GRAVITY";
+		config.useGL30 = true;
+		config.width = 640;
+		config.height = 1136;		
 		new LwjglApplication(new MainGravity(), config);
 	}
 }
