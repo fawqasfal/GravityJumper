@@ -10,8 +10,8 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 public class MainGravity extends Game {
 	SpriteBatch batch;
 	BitmapFont font;
-	static final int WIDTH = 800;
-	static final int HEIGHT = 800;
+	public static final int WIDTH = 800;
+	public static final int HEIGHT = 800;
 	
 	public void create() {
 		batch = new SpriteBatch();
