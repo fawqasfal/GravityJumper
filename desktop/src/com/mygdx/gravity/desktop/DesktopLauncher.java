@@ -9,8 +9,8 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.title = "MEGA GRAVITY";
 		config.useGL30 = true;
-		config.width = 640;
-		config.height = 1136;		
+		config.width = MainGravity.WIDTH;
+		config.height = MainGravity.HEIGHT;		
 		new LwjglApplication(new MainGravity(), config);
 	}
 }
