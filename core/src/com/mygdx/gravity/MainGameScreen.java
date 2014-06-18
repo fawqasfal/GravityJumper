@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.*;
 
 public class MainGameScreen extends ScreenAdapter {
 	MainGravity game;
+	Texture bgImage;
 	OrthographicCamera camera;
 	int w = MainGravity.WIDTH;
 	int h = MainGravity.HEIGHT;
@@ -20,7 +21,7 @@ public class MainGameScreen extends ScreenAdapter {
 		this.game = game;
 
 		//images
-
+		bgImage = new Texture(Gdx.files.internal("background.png"));
 		//sound
 		//play in show
 
@@ -42,6 +43,7 @@ public class MainGameScreen extends ScreenAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		game.batch.setProjectionMatrix(camera.combined);
  		game.batch.begin();
+ 			game.batch.draw(bgImage,0,0);
    		game.batch.end();
    		camera.update();
 	}
