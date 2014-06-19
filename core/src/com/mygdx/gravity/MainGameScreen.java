@@ -22,8 +22,11 @@ public class MainGameScreen extends ScreenAdapter {
 	int w = MainGravity.WIDTH;
 	int h = MainGravity.HEIGHT;
 
+	long sinceLastL = 0;
+	long sinceLastR = 0;
+	int currLeft = -1;
+	int currRight = -1; //holds indices of the textureregion[]s that we need to choose for animation of hero
 	ShapeRenderer shapeRenderer; //debugging purposes
-
 	
 	public MainGameScreen(MainGravity game) {
 		this.game = game; //has the spritebatch that does the drawing that we will be needing
@@ -39,9 +42,14 @@ public class MainGameScreen extends ScreenAdapter {
 		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));		
 		//platforms
 		platforms = new Array<Platform>();
-		platforms.add(new Platform(0,0));
+		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) {
+			platforms.add(new Platform(i,0));
+		}
+
 		//hero
 		hero = new Hero(0, platforms.get(0).getRect().height);
+		sinceLastL = System.nanoTime();
+		sinceLastR = System.nanoTime();
 	}
 
 	public float randrange(float low, float high) {
@@ -53,9 +61,9 @@ public class MainGameScreen extends ScreenAdapter {
 		camera.update();
 		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); //something OpenGL needs to do, who knows
-		
+ 		inputHandler();
 		game.batch.setProjectionMatrix(camera.combined);
-
+		TextureRegion heroTexture; 
 		shapeRenderer.setProjectionMatrix(camera.combined); 
 		//something for going from GPU's color-bit matrices to pixels on screen? or something
 		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
@@ -65,20 +73,49 @@ public class MainGameScreen extends ScreenAdapter {
  			for (Platform platform : platforms) 
  				render(platform.getImage(), platform.getRect().x, platform.getRect().y, 
  					platform.getRect().width, platform.getRect().height);
- 			render(hero.image, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
+ 			if (currLeft != -1)
+ 				heroTexture = hero.moveLeft[currLeft];
+ 			else if (currRight != -1)
+ 				heroTexture = hero.moveRight[currRight]; 
+ 			else
+ 				heroTexture = hero.image;
+ 			render(heroTexture, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
 
- 		if(Gdx.input.isKeyPressed(Keys.LEFT)) hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
-   		if(Gdx.input.isKeyPressed(Keys.RIGHT)) hero.moveRight(300 * Gdx.graphics.getDeltaTime());
-   		
    		game.batch.end();
 		shapeRenderer.end();
 	}
 
 	public void render(TextureRegion image, float x, float y, float width, float height) {
 		game.batch.draw(image, x, y, width, height);
-		shapeRenderer.rect((x), (y), (width), (height)); //debug render is in the bottom left, at 1/8th the size
+		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
 	}
 
+	public void inputHandler() {
+		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
+ 			hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
+ 			float slInSecs = (System.nanoTime() - sinceLastL) / (float) (Math.pow(10,9));
+ 			float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveLeft.length;
+ 			if (slInSecs > timePerFrame) {
+ 				currLeft = (int)(currLeft + slInSecs / timePerFrame) % 12;
+ 				sinceLastL = System.nanoTime();
+ 			}
+ 		} else {
+ 			currLeft = -1; //reset animation if hes not moving left
+ 			sinceLastL = 0;
+ 		}
+   		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
+ 			hero.moveRight(300 * Gdx.graphics.getDeltaTime());
+ 			float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
+ 			float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
+ 			if (slInSecs > timePerFrame) {
+ 				currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
+ 				sinceLastR = System.nanoTime();
+ 			}
+ 		} else {
+ 			currRight= -1; //reset animation if hes not moving left
+ 			sinceLastR = 0;
+ 		}
+	}
 	public void dispose() {
 	     game.batch.dispose();
 	}
