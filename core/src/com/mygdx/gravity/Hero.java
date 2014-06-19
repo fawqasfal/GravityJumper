@@ -1,5 +1,6 @@
 package com.mygdx.gravity;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,11 +14,21 @@ public class Hero {
 	public static final int UP = 1;
 	public static final int DOWN = -1;
 
-	public Hero(float x, float y, int width, int height, Texture image) {
+	public static final String DEFAULT_IMAGE = "stable.png";
+	public static final float DEFAULT_START_X = 7;
+	public static final float DEFAULT_START_Y = 0;
+	public static final int DEFAULT_IMG_WIDTH = 18;
+	public static final int DEFAULT_IMG_HEIGHT = 31;
+
+	public Hero(float x, float y, float imgX, float imgY, int width, int height, Texture image) {
 		this.rectRep = new Rectangle(x, y, width, height);
-		this.image = new TextureRegion(image, width, height);
+		this.image = new TextureRegion(image, imgX, imgY, width, height);
 	}
 
+	public Hero(float spawnX, float spawnY) {
+		Texture imgTexture = new Texture(Gdx.files.internal(DEFAULT_IMAGE));
+		new Hero(spawnX, spawnY, DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_IMG_WIDTH, DEFAULT_IMG_HEIGHT, imgTexture);
+	}
 	public void moveLeft(int amt) {
 		this.rectRep.x -= amt;
 	}
