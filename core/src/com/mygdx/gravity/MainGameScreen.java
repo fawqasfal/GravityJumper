@@ -39,7 +39,10 @@ public class MainGameScreen extends ScreenAdapter {
 		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));		
 		//platforms
 		platforms = new Array<Platform>();
-		platforms.add(new Platform(0,0));
+		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) {
+			platforms.add(new Platform(i,0));
+		}
+
 		//hero
 		hero = new Hero(0, platforms.get(0).getRect().height);
 	}
@@ -53,7 +56,7 @@ public class MainGameScreen extends ScreenAdapter {
 		camera.update();
 		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); //something OpenGL needs to do, who knows
-		
+
 		game.batch.setProjectionMatrix(camera.combined);
 
 		shapeRenderer.setProjectionMatrix(camera.combined); 
@@ -67,7 +70,8 @@ public class MainGameScreen extends ScreenAdapter {
  					platform.getRect().width, platform.getRect().height);
  			render(hero.image, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
 
- 		if(Gdx.input.isKeyPressed(Keys.LEFT)) hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
+ 		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
+ 			hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
    		if(Gdx.input.isKeyPressed(Keys.RIGHT)) hero.moveRight(300 * Gdx.graphics.getDeltaTime());
    		
    		game.batch.end();
@@ -76,7 +80,7 @@ public class MainGameScreen extends ScreenAdapter {
 
 	public void render(TextureRegion image, float x, float y, float width, float height) {
 		game.batch.draw(image, x, y, width, height);
-		shapeRenderer.rect((x), (y), (width), (height)); //debug render is in the bottom left, at 1/8th the size
+		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
 	}
 
 	public void dispose() {
