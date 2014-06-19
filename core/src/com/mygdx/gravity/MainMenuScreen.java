@@ -24,8 +24,11 @@ public class MainMenuScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
 
         game.batch.begin();
-        game.font.draw(game.batch, "Welcome to Gravity Jump", (w / 2) - 150, (h / 2) + 50);
-        game.font.draw(game.batch, "TAP ANYWHERE TO BEGIN", (w / 2) - 150, h / 2);
+        game.font.draw(game.batch, "Welcome to Gravity Jump", (w / 2) - 150, (h / 2) + 100);
+        game.tutFont.draw(game.batch, "Move with left/right, flip your gravity with up/down, punch enemies with Enter.", 
+            (w / 2) - 360,
+            (h / 2) + 50);
+        game.font.draw(game.batch, "CLICK ANYWHERE TO BEGIN", (w / 2) - 150, h / 2);
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
