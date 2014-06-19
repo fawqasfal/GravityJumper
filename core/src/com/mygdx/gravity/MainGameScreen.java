@@ -23,8 +23,6 @@ public class MainGameScreen extends ScreenAdapter {
 	
 	public MainGameScreen(MainGravity game) {
 		this.game = game;
-		//images
-		bgImage = new Texture(Gdx.files.internal("background.png"));
 
 		//sound
 		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
@@ -37,10 +35,6 @@ public class MainGameScreen extends ScreenAdapter {
 		//platforms
 		platforms = new Array<Platform>();
 		platforms.add(new Platform(0,0));
-		platforms.add(new Platform(64 * Platform.SCALE, 0));
-		platforms.add(new Platform(256 * Platform.SCALE, 0));
-		platforms.add(new Platform(0, 30 * Platform.SCALE));
-		platforms.add(new Platform(0, 60 * Platform.SCALE));
 	}
 
 	public float randrange(float low, float high) {
@@ -49,11 +43,10 @@ public class MainGameScreen extends ScreenAdapter {
 	}
 	
 	public void render (float delta) {
-		Gdx.gl.glClearColor(0, 0, 0.2f, 1);
+		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		game.batch.setProjectionMatrix(camera.combined);
  		game.batch.begin();
- 			game.batch.draw(bgImage,0,0);
  			for (Platform platform : platforms) {
  				game.batch.draw(platform.getImage(), platform.getRect().x, platform.getRect().y, 
  					platform.getRect().width, platform.getRect().height);
