@@ -18,7 +18,7 @@ public class MainGameScreen extends ScreenAdapter {
 	Hero hero;
 	Music gameMusic;
 	OrthographicCamera camera;
-	Array<Platform> platforms; 
+	public static Array<Platform> platforms; 
 	int w = MainGravity.WIDTH;
 	int h = MainGravity.HEIGHT;
 
@@ -63,23 +63,24 @@ public class MainGameScreen extends ScreenAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); //something OpenGL needs to do, who knows
  		inputHandler();
 		game.batch.setProjectionMatrix(camera.combined);
-		TextureRegion heroTexture; 
 		shapeRenderer.setProjectionMatrix(camera.combined); 
 		//something for going from GPU's color-bit matrices to pixels on screen? or something
 		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
 		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
 
+		hero.collides(platforms); //stops jumping
+		if (hero.isJumping) hero.getRect().y += hero.direction * hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
+		if (hero.getRect().y > MainGravity.HEIGHT)
+			hero.getRect().setY(0);
+		if (hero.getRect().y < 0)
+			hero.getRect().setY(MainGravity.HEIGHT + hero.getRect().height);
+
  		game.batch.begin();
  			for (Platform platform : platforms) 
  				render(platform.getImage(), platform.getRect().x, platform.getRect().y, 
  					platform.getRect().width, platform.getRect().height);
- 			if (currLeft != -1)
- 				heroTexture = hero.moveLeft[currLeft];
- 			else if (currRight != -1)
- 				heroTexture = hero.moveRight[currRight]; 
- 			else
- 				heroTexture = hero.image;
- 			render(heroTexture, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
+ 			chooseTexture();
+ 			render(hero.currImage, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
 
    		game.batch.end();
 		shapeRenderer.end();
@@ -89,15 +90,36 @@ public class MainGameScreen extends ScreenAdapter {
 		game.batch.draw(image, x, y, width, height);
 		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
 	}
-
+	public void chooseTexture() {
+		System.out.println(hero.direction);
+		if (currLeft != -1)
+			if (hero.direction == Hero.FEET_UP)
+				hero.currImage = hero.moveLeftFlipped[currLeft];
+			else
+				hero.currImage = hero.moveLeft[currLeft];
+		else if (currRight != -1)
+			if (hero.direction == Hero.FEET_UP)
+				hero.currImage = hero.moveRightFlipped[currRight];
+			else
+				hero.currImage = hero.moveRight[currRight];
+		else
+			if (hero.direction == Hero.FEET_UP)
+				hero.currImage = hero.defImageFlipped;
+			else
+				hero.currImage = hero.defImage;
+	}
 	public void inputHandler() {
 		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
  			hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
- 			float slInSecs = (System.nanoTime() - sinceLastL) / (float) (Math.pow(10,9));
- 			float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveLeft.length;
- 			if (slInSecs > timePerFrame) {
- 				currLeft = (int)(currLeft + slInSecs / timePerFrame) % 12;
- 				sinceLastL = System.nanoTime();
+ 			if (hero.getRect().x + hero.getRect().width < 0)
+ 				hero.getRect().setX(MainGravity.WIDTH);
+ 			if (hero.collides(platforms)) {
+ 				float slInSecs = (System.nanoTime() - sinceLastL) / (float) (Math.pow(10,9));
+ 				float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveLeft.length;
+ 				if (slInSecs > timePerFrame) {
+ 					currLeft = (int)(currLeft + slInSecs / timePerFrame) % 12;
+ 					sinceLastL = System.nanoTime();
+ 				}
  			}
  		} else {
  			currLeft = -1; //reset animation if hes not moving left
@@ -105,15 +127,23 @@ public class MainGameScreen extends ScreenAdapter {
  		}
    		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
  			hero.moveRight(300 * Gdx.graphics.getDeltaTime());
- 			float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
- 			float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
- 			if (slInSecs > timePerFrame) {
- 				currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
- 				sinceLastR = System.nanoTime();
+ 			if (hero.getRect().x > MainGravity.WIDTH) 
+ 				hero.getRect().x = -10;
+ 			if (hero.collides(platforms)) {
+ 				float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
+ 				float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
+ 				if (slInSecs > timePerFrame) {
+ 					currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
+ 					sinceLastR = System.nanoTime();
+ 				}
  			}
  		} else {
  			currRight= -1; //reset animation if hes not moving left
  			sinceLastR = 0;
+ 		}
+
+ 		if (Gdx.input.isKeyPressed(Keys.UP) || Gdx.input.isKeyPressed(Keys.DOWN)) {
+ 			if (!hero.isJumping) hero.jump();
  		}
 	}
 	public void dispose() {

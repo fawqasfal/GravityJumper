@@ -9,19 +9,22 @@ import com.badlogic.gdx.utils.*;
 
 public class Hero {
 	Rectangle rectRep;
-	TextureRegion image;
+	final TextureRegion defImage;
+	final TextureRegion defImageFlipped;
 
-	Texture moveRightSheet;
-	Texture moveLeftSheet; 
 
 	TextureRegion[] moveLeft;
 	TextureRegion[] moveRight;
+	TextureRegion[] moveLeftFlipped;
+	TextureRegion[] moveRightFlipped;
 
+	TextureRegion currImage; 
 	boolean isJumping;
 	int direction;
 
-	public static final int UP = 1;
-	public static final int DOWN = -1;
+	float velocity = INIT_V;
+	public static final int FEET_UP = 1;
+	public static final int FEET_DOWN = -1;
 	public static final String DEFAULT_IMAGE = "stable.png";
 	public static final String DEFAULT_MOVE_LEFT_IMAGE = "leftmove.png";
 	public static final String DEFAULT_MOVE_RIGHT_IMAGE = "rightmove.png";
@@ -31,16 +34,19 @@ public class Hero {
 	public static final int DEFAULT_IMG_HEIGHT = 31;
 	public static final float SCALE = 4.5f;
 	public static final float FRAMES_PER_SECOND = 0.12f;
+	public static final float GRAVITY = 18f;
+	public static final float INIT_V = 20;
  
 	public Hero(float x, float y, float imgX, float imgY, float width, float height, 
 				Texture image, Texture moveLeftSheet, Texture moveRightSheet) {
 		this.rectRep = new Rectangle(x, y, SCALE * width, SCALE * height);
-		this.image = new TextureRegion(image, (int) imgX, (int) imgY, (int) width, (int) height); 
-		this.moveRightSheet = moveRightSheet;
-		this.moveLeftSheet = moveLeftSheet;
-		this.setSheets();
+		this.defImage = new TextureRegion(image, (int) imgX, (int) imgY, (int) width, (int) height); 
+		this.defImageFlipped = new TextureRegion(this.defImage);
+		this.defImageFlipped.flip(false, true);
+		this.currImage = this.defImage;
+		this.setSheets(moveRightSheet, moveLeftSheet);
 		this.isJumping = false;
-		this.direction = 1;
+		this.direction = -1;
 	}
 
 	public Hero(float spawnX, float spawnY) {
@@ -50,24 +56,31 @@ public class Hero {
 			new Texture(Gdx.files.internal(DEFAULT_MOVE_RIGHT_IMAGE)));
 	}
 
-	public void setSheets() {
+	public void setSheets(Texture moveLeftSheet, Texture moveRightSheet) {
 		//breaks sprite sheets into Animations.
-		TextureRegion[] leftMove = new TextureRegion[12];
-		TextureRegion[] rightMove = new TextureRegion[12];
+		this.moveLeft = new TextureRegion[12];
+		this.moveRight = new TextureRegion[12];
+		this.moveLeftFlipped = new TextureRegion[12];
+		this.moveRightFlipped = new TextureRegion[12];
 		for (int i = 0; i < 12; i++) {
 			int l_startX = 0;
 			int r_endX = 0;
 			if (i >= 2 && i <= 4) l_startX = -1; //idiosyncracies in this specific frame 
 			if (i == 3) r_endX = 1; 
-			leftMove[i] = new TextureRegion(this.moveLeftSheet, 32 * i + DEFAULT_START_X + l_startX, DEFAULT_START_Y,
+			this.moveLeft[i] = new TextureRegion(moveLeftSheet, 32 * i + DEFAULT_START_X + l_startX, DEFAULT_START_Y,
 				DEFAULT_IMG_WIDTH + -1 * l_startX, DEFAULT_IMG_HEIGHT);
-			rightMove[i] = new TextureRegion(this.moveRightSheet, 32 * i + DEFAULT_START_X + r_endX, DEFAULT_START_Y,
+			this.moveLeftFlipped[i] = new TextureRegion(moveLeft[i]);
+			this.moveRight[i] = new TextureRegion(moveRightSheet, 32 * i + DEFAULT_START_X + r_endX, DEFAULT_START_Y,
 				DEFAULT_IMG_WIDTH + r_endX, DEFAULT_IMG_HEIGHT);
+			this.moveRightFlipped[i] = new TextureRegion(moveRight[i]);
 		}
-		this.moveLeft = leftMove;
-		this.moveRight = rightMove;
 
+		for (int k = 0; k < 12; k++) {
+			this.moveLeftFlipped[k].flip(false, true);
+			this.moveRightFlipped[k].flip(false, true);
+		}
 	}
+
 	public void moveLeft(float amt) {
 		this.rectRep.x -= amt;
 	}
@@ -80,18 +93,25 @@ public class Hero {
 	public void jump() {
 		this.isJumping = true;
 		this.direction = -1 * direction;
+		this.getRect().y += 20 * direction;
 	}
 
-	public void jumpIter(float amt) {
-		if (this.isJumping) this.rectRep.y += direction * amt;		
+	public float jumpIter(float accel) {
+		if (this.isJumping) this.velocity += accel;
+		return this.velocity;		
 	}
 
 	public boolean collides(Rectangle object) {
-		return false;
+		boolean intersects;
+		Rectangle rect = this.rectRep;
+		intersects = (rect.x + rect.width < object.x || object.x + object.width < rect.x 
+			|| object.y + object.height < rect.y || rect.y + rect.height < object.y);
+		return !intersects;
 	}
  	public boolean collides(Platform platform) {
-		if (this.rectRep.overlaps(platform.rectRep)) {
+		if (this.collides(platform.rectRep)) {
 			this.isJumping = false;
+			this.velocity = INIT_V;
 			return true;
 		} else{
 			return false;
