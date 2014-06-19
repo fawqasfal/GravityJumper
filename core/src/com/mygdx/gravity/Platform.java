@@ -10,14 +10,11 @@ public class Platform {
 	Rectangle rectRep;
 
 	public static final int DEFAULT_IMAGE_HEIGHT = 5;
-	public static final int DEFALT_IMAGE_WIDTH = 17;
+	public static final int DEFAULT_IMAGE_WIDTH = 17;
 	public static final String DEFAULT_IMAGE = "platform.png";
 	public static final float SCALE = 5f;
 	public Platform(Texture image, float startX, float startY, int width, int height) {
-		this.image = new TextureRegion(image, 0, width - height, width, height);
-		/*why width - height? Assuming default image is a power-of-two, this is imgHeight - actualHeightOfObject.
-		actualHeightOfObject is different from imgHeight because the platform is not a power of two, meaning there is 
-		going to be some blank space at the top that we're going to get rid of. */
+		this.image = new TextureRegion(image, 0, 64 - height, width, height); //given platform image is 64x64
 		this.rectRep = new Rectangle(startX, startY, width * SCALE, height * SCALE);
 	}
 	public Platform(float spawnX, float spawnY) {
