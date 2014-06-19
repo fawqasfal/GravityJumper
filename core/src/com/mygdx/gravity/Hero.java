@@ -15,25 +15,28 @@ public class Hero {
 	public static final int DOWN = -1;
 
 	public static final String DEFAULT_IMAGE = "stable.png";
-	public static final float DEFAULT_START_X = 7;
-	public static final float DEFAULT_START_Y = 0;
+	public static final int DEFAULT_START_X = 7;
+	public static final int DEFAULT_START_Y = 1; //from top-to-bottom, we want to cut off the extra pixel on top of his head
 	public static final int DEFAULT_IMG_WIDTH = 18;
-	public static final int DEFAULT_IMG_HEIGHT = 31;
-
-	public Hero(float x, float y, float imgX, float imgY, int width, int height, Texture image) {
-		this.rectRep = new Rectangle(x, y, width, height);
-		this.image = new TextureRegion(image, imgX, imgY, width, height);
+	public static final int DEFAULT_IMG_HEIGHT = 32;
+	public static final float SCALE = 4.5f;
+ 
+	public Hero(float x, float y, float imgX, float imgY, float width, float height, Texture image) {
+		this.rectRep = new Rectangle(x, y, SCALE * width, SCALE * height);
+		this.image = new TextureRegion(image, DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_IMG_WIDTH, DEFAULT_IMG_HEIGHT); 
+		this.isJumping = false;
+		this.direction = 1;
 	}
 
 	public Hero(float spawnX, float spawnY) {
-		Texture imgTexture = new Texture(Gdx.files.internal(DEFAULT_IMAGE));
-		new Hero(spawnX, spawnY, DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_IMG_WIDTH, DEFAULT_IMG_HEIGHT, imgTexture);
+		this(spawnX, spawnY, DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_IMG_WIDTH, DEFAULT_IMG_HEIGHT, 
+			new Texture(Gdx.files.internal(DEFAULT_IMAGE)));
 	}
-	public void moveLeft(int amt) {
+	public void moveLeft(float amt) {
 		this.rectRep.x -= amt;
 	}
 
-	public void moveRight(int amt) {
+	public void moveRight(float amt) {
 		this.rectRep.x += amt;
 	}
 
@@ -43,7 +46,7 @@ public class Hero {
 		this.direction = -1 * direction;
 	}
 
-	public void jumpIter(int amt) {
+	public void jumpIter(float amt) {
 		if (this.isJumping) this.rectRep.y += direction * amt;		
 	}
 
@@ -54,5 +57,9 @@ public class Hero {
 		} else{
 			return false;
 		}
+	}
+	public Rectangle getRect() {
+		//GET WRECKED! 
+		return this.rectRep;
 	}
 }
