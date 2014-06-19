@@ -10,6 +10,7 @@ public class Platform {
 	Rectangle rectRep;
 
 	public static final int DEFAULT_IMAGE_HEIGHT = 5;
+	public static final int DEFALT_IMAGE_WIDTH = 17;
 	public static final String DEFAULT_IMAGE = "platform.png";
 	public static final float SCALE = 5f;
 	public Platform(Texture image, float startX, float startY, int width, int height) {
@@ -20,7 +21,7 @@ public class Platform {
 		this.rectRep = new Rectangle(startX, startY, width * SCALE, height * SCALE);
 	}
 	public Platform(float spawnX, float spawnY) {
-		this(new Texture(Gdx.files.internal(DEFAULT_IMAGE)), spawnX, spawnY, 64, DEFAULT_IMAGE_HEIGHT);
+		this(new Texture(Gdx.files.internal(DEFAULT_IMAGE)), spawnX, spawnY, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT);
 	}
 
 	public TextureRegion getImage() {
