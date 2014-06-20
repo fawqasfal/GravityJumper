@@ -30,6 +30,7 @@ public class Platform {
 	}
 
 	public Rectangle getRect() {
+		//GET WRECKED! 
 		return this.rectRep;
 	}
 

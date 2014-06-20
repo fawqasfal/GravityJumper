@@ -24,8 +24,12 @@ public class MainGameScreen extends ScreenAdapter {
 
 	long sinceLastL = 0;
 	long sinceLastR = 0;
+	long sinceLastPL = 0;
+	long sinceLastPR = 0;
 	int currLeft = -1;
 	int currRight = -1; //holds indices of the textureregion[]s that we need to choose for animation of hero
+	int punchLeft = 0;
+	int punchRight = 0;
 	ShapeRenderer shapeRenderer; //debugging purposes
 	
 	public MainGameScreen(MainGravity game) {
@@ -44,6 +48,7 @@ public class MainGameScreen extends ScreenAdapter {
 		platforms = new Array<Platform>();
 		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) {
 			platforms.add(new Platform(i,0));
+			platforms.add(new Platform(i, MainGravity.HEIGHT - Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE));
 		}
 
 		//hero
@@ -67,11 +72,37 @@ public class MainGameScreen extends ScreenAdapter {
 		//something for going from GPU's color-bit matrices to pixels on screen? or something
 		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
 		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
-
+		if (hero.isPunchingRight) {
+ 				float slprInSecs = (System.nanoTime() - sinceLastPR) / (float) (Math.pow(10,9));
+ 				float timePerFrame = Hero.FRAMES_PER_SECOND_PUNCH / hero.punchRight.length;
+ 				if (slprInSecs > timePerFrame) {
+ 					punchRight = (int) (punchRight + slprInSecs / timePerFrame);
+ 					sinceLastPR = System.nanoTime();
+ 					if (punchRight > hero.punchRight.length) {
+ 						punchRight = 0;
+ 						//hero.isPunchingRight = false;
+ 						sinceLastPR = 0;
+					}
+ 				}
+ 			}
+ 			else if (hero.isPunchingLeft) {
+ 				hero.isPunchingLeft = true;
+ 				float slplInSecs = (System.nanoTime() - sinceLastPL) / (float) (Math.pow(10,9));
+ 				float timePerFrame = Hero.FRAMES_PER_SECOND_PUNCH / hero.punchLeft.length;
+ 				if (slplInSecs > timePerFrame) {
+ 					punchLeft = (int) (punchLeft + slplInSecs / timePerFrame);
+ 					sinceLastPL = System.nanoTime();
+ 					if (punchLeft > hero.punchLeft.length) {
+ 						punchLeft = 0;
+ 						//hero.isPunchingLeft = false;
+ 						sinceLastPL = 0;
+					}
+ 				}
+ 			}
 		hero.collides(platforms); //stops jumping
 		if (hero.isJumping) hero.getRect().y += hero.direction * hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
 		if (hero.getRect().y > MainGravity.HEIGHT)
-			hero.getRect().setY(0);
+			hero.getRect().setY(0 - MainGravity.HEIGHT);
 		if (hero.getRect().y < 0)
 			hero.getRect().setY(MainGravity.HEIGHT + hero.getRect().height);
 
@@ -90,8 +121,29 @@ public class MainGameScreen extends ScreenAdapter {
 		game.batch.draw(image, x, y, width, height);
 		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
 	}
+
 	public void chooseTexture() {
-		System.out.println(hero.direction);
+		if (hero.isPunchingRight || hero.isPunchingLeft) {
+			if (hero.isPunchingLeft)
+				if (hero.direction == Hero.FEET_UP) {
+					hero.currImage = hero.punchLeftFlipped[punchLeft];
+					hero.punchLeftIter(punchLeft, true);
+				}
+				else {
+					hero.currImage = hero.punchLeft[punchLeft];
+					hero.punchLeftIter(punchLeft, false);
+				}
+			else
+				if (hero.direction == Hero.FEET_UP) {
+					hero.currImage = hero.punchRightFlipped[punchRight];
+					hero.punchRightIter(punchRight, true);
+				}
+				else {
+					hero.currImage = hero.punchRightFlipped[punchRight]; 
+					hero.punchRightIter(punchRight, false);
+				}
+			return;
+		}
 		if (currLeft != -1)
 			if (hero.direction == Hero.FEET_UP)
 				hero.currImage = hero.moveLeftFlipped[currLeft];
@@ -108,8 +160,10 @@ public class MainGameScreen extends ScreenAdapter {
 			else
 				hero.currImage = hero.defImage;
 	}
+
 	public void inputHandler() {
-		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
+		if (hero.isPunchingLeft || hero.isPunchingRight) return;
+		if(Gdx.input.isKeyPressed(Keys.A)) {
  			hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
  			if (hero.getRect().x + hero.getRect().width < 0)
  				hero.getRect().setX(MainGravity.WIDTH);
@@ -125,7 +179,7 @@ public class MainGameScreen extends ScreenAdapter {
  			currLeft = -1; //reset animation if hes not moving left
  			sinceLastL = 0;
  		}
-   		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
+   		if(Gdx.input.isKeyPressed(Keys.D)) {
  			hero.moveRight(300 * Gdx.graphics.getDeltaTime());
  			if (hero.getRect().x > MainGravity.WIDTH) 
  				hero.getRect().x = -10;
@@ -142,9 +196,27 @@ public class MainGameScreen extends ScreenAdapter {
  			sinceLastR = 0;
  		}
 
- 		if (Gdx.input.isKeyPressed(Keys.UP) || Gdx.input.isKeyPressed(Keys.DOWN)) {
+ 		if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.S)) {
  			if (!hero.isJumping) hero.jump();
  		}
+ 		if ((Gdx.input.isKeyPressed(Keys.K) || Gdx.input.isKeyPressed(Keys.J)) &&
+ 			!Gdx.input.isKeyPressed(Keys.W) &&
+ 			!Gdx.input.isKeyPressed(Keys.S) &&
+ 			!Gdx.input.isKeyPressed(Keys.A) && 
+ 			!Gdx.input.isKeyPressed(Keys.D)) {
+ 			System.out.println("we get here");
+ 			if (Gdx.input.isKeyPressed(Keys.K))
+ 				hero.isPunchingRight = true;
+ 			else
+ 				hero.isPunchingLeft = true;
+ 		}
+
+ 		if (hero.isPunchingLeft) {
+ 			hero.isPunchingRight = false; 
+ 		} else if (hero.isPunchingRight) {
+ 			hero.isPunchingLeft = false;
+ 		}
+
 	}
 	public void dispose() {
 	     game.batch.dispose();
