@@ -69,7 +69,7 @@ public class MainGameScreen extends ScreenAdapter {
 		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
 
 		hero.collides(platforms); //stops jumping
-		if (hero.isJumping) hero.getRect().y += hero.direction * hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
+		if (hero.isJumping) hero.getRect().y += hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
 		if (hero.getRect().y > MainGravity.HEIGHT)
 			hero.getRect().setY(0);
 		if (hero.getRect().y < 0)
@@ -110,7 +110,7 @@ public class MainGameScreen extends ScreenAdapter {
 	}
 	public void inputHandler() {
 		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
- 			hero.moveLeft(300 * Gdx.graphics.getDeltaTime());
+ 			hero.moveLeft(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime());
  			if (hero.getRect().x + hero.getRect().width < 0)
  				hero.getRect().setX(MainGravity.WIDTH);
  			if (hero.collides(platforms)) {
@@ -126,20 +126,22 @@ public class MainGameScreen extends ScreenAdapter {
  			sinceLastL = 0;
  		}
    		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
- 			hero.moveRight(300 * Gdx.graphics.getDeltaTime());
+ 			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime());
  			if (hero.getRect().x > MainGravity.WIDTH) 
  				hero.getRect().x = -10;
- 			if (hero.collides(platforms)) {
- 				float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
- 				float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
- 				if (slInSecs > timePerFrame) {
- 					currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
- 					sinceLastR = System.nanoTime();
+ 			for (Platform platform : platforms) {
+ 				if (hero.collides(platforms)) {
+ 					float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
+ 					float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
+ 					if (slInSecs > timePerFrame) {
+ 						currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
+ 						sinceLastR = System.nanoTime();
+ 					}
  				}
+ 			} else {
+ 				currRight= -1; //reset animation if hes not moving left
+ 				sinceLastR = 0;
  			}
- 		} else {
- 			currRight= -1; //reset animation if hes not moving left
- 			sinceLastR = 0;
  		}
 
  		if (Gdx.input.isKeyPressed(Keys.UP) || Gdx.input.isKeyPressed(Keys.DOWN)) {

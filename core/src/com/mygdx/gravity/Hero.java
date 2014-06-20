@@ -11,18 +11,18 @@ public class Hero {
 	Rectangle rectRep;
 	final TextureRegion defImage;
 	final TextureRegion defImageFlipped;
-
-
+	final TextureRegion[] defImages; 
 	TextureRegion[] moveLeft;
 	TextureRegion[] moveRight;
 	TextureRegion[] moveLeftFlipped;
 	TextureRegion[] moveRightFlipped;
-
+	TextureRegion[][] textureRegions; 
 	TextureRegion currImage; 
 	boolean isJumping;
 	int direction;
-
+	int coin; 
 	float velocity = INIT_V;
+
 	public static final int FEET_UP = 1;
 	public static final int FEET_DOWN = -1;
 	public static final String DEFAULT_IMAGE = "stable.png";
@@ -36,15 +36,18 @@ public class Hero {
 	public static final float FRAMES_PER_SECOND = 0.12f;
 	public static final float GRAVITY = 18f;
 	public static final float INIT_V = 20;
- 
+ 	public static final int MOVE_AMT = 300;
+
 	public Hero(float x, float y, float imgX, float imgY, float width, float height, 
 				Texture image, Texture moveLeftSheet, Texture moveRightSheet) {
 		this.rectRep = new Rectangle(x, y, SCALE * width, SCALE * height);
 		this.defImage = new TextureRegion(image, (int) imgX, (int) imgY, (int) width, (int) height); 
 		this.defImageFlipped = new TextureRegion(this.defImage);
 		this.defImageFlipped.flip(false, true);
+		this.defImages = {defImage, defImageFlipped};
 		this.currImage = this.defImage;
 		this.setSheets(moveRightSheet, moveLeftSheet);
+		this.textureRegions = {moveLeft, moveRight, moveLeftFlipped, moveRightFlipped};
 		this.isJumping = false;
 		this.direction = -1;
 	}
@@ -67,17 +70,17 @@ public class Hero {
 			int r_endX = 0;
 			if (i >= 2 && i <= 4) l_startX = -1; //idiosyncracies in this specific frame 
 			if (i == 3) r_endX = 1; 
+
 			this.moveLeft[i] = new TextureRegion(moveLeftSheet, 32 * i + DEFAULT_START_X + l_startX, DEFAULT_START_Y,
 				DEFAULT_IMG_WIDTH + -1 * l_startX, DEFAULT_IMG_HEIGHT);
+
 			this.moveLeftFlipped[i] = new TextureRegion(moveLeft[i]);
+			this.moveLeftFlipped[i].flip(false, true);
 			this.moveRight[i] = new TextureRegion(moveRightSheet, 32 * i + DEFAULT_START_X + r_endX, DEFAULT_START_Y,
 				DEFAULT_IMG_WIDTH + r_endX, DEFAULT_IMG_HEIGHT);
-			this.moveRightFlipped[i] = new TextureRegion(moveRight[i]);
-		}
 
-		for (int k = 0; k < 12; k++) {
-			this.moveLeftFlipped[k].flip(false, true);
-			this.moveRightFlipped[k].flip(false, true);
+			this.moveRightFlipped[i] = new TextureRegion(moveRight[i]);
+			this.moveRightFlipped[i].flip(false, true);
 		}
 	}
 
@@ -97,8 +100,8 @@ public class Hero {
 	}
 
 	public float jumpIter(float accel) {
-		if (this.isJumping) this.velocity += accel;
-		return this.velocity;		
+		if (this.isJumping) this.velocity += this.direction * accel;
+		return this.direction * this.velocity;		
 	}
 
 	public boolean collides(Rectangle object) {
@@ -107,6 +110,32 @@ public class Hero {
 		intersects = (rect.x + rect.width < object.x || object.x + object.width < rect.x 
 			|| object.y + object.height < rect.y || rect.y + rect.height < object.y);
 		return !intersects;
+	}
+
+	public boolean collides(Enemy enemy) {
+		boolean loseCoin  = false;
+		if (this.collides(enemy.rectRep)) {
+			if (this.direction * enemy.rectRep.y < this.direction * this.rectRep.y)
+				loseCoin = true;
+		}
+		if (loseCoin) loseCoin(enemy.damage);
+		else {
+			gainCoin(enemy.giveAway);
+			enemy.die();
+			//bounce-back
+			this.jump();
+		}
+		return loseCoin;
+	}
+
+	public void gainCoin(int amt) {
+		this.coin += amt;
+		System.out.println(coin);
+	}
+
+	public void loseCoin(int amt) {
+		this.com -= amt;
+		System.out.println(coin);
 	}
  	public boolean collides(Platform platform) {
 		if (this.collides(platform.rectRep)) {
@@ -118,12 +147,6 @@ public class Hero {
 		}
 	}
 
-	public boolean collides(Array<Platform> platforms) {
-		for (Platform platform : platforms) {
-			if (this.collides(platform)) return true;
-		}
-		return false;
-	}
 	public Rectangle getRect() {
 		//GET WRECKED! 
 		return this.rectRep;
