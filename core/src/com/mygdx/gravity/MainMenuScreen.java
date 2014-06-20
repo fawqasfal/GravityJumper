@@ -32,7 +32,7 @@ public class MainMenuScreen extends ScreenAdapter {
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
-        	game.setScreen( new MainGameScreen(game));
+        	game.setScreen(new MainGameScreen(game));
         	dispose();
         }
 	}

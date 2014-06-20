@@ -21,11 +21,6 @@ public class MainGameScreen extends ScreenAdapter {
 	public static Array<Platform> platforms; 
 	int w = MainGravity.WIDTH;
 	int h = MainGravity.HEIGHT;
-
-	long sinceLastL = 0;
-	long sinceLastR = 0;
-	int currLeft = -1;
-	int currRight = -1; //holds indices of the textureregion[]s that we need to choose for animation of hero
 	ShapeRenderer shapeRenderer; //debugging purposes
 	
 	public MainGameScreen(MainGravity game) {
@@ -44,19 +39,14 @@ public class MainGameScreen extends ScreenAdapter {
 		platforms = new Array<Platform>();
 		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) {
 			platforms.add(new Platform(i,0));
+			platforms.add(new Platform(i, MainGravity.HEIGHT - Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE));
 		}
 
 		//hero
 		hero = new Hero(0, platforms.get(0).getRect().height);
-		sinceLastL = System.nanoTime();
-		sinceLastR = System.nanoTime();
+
 	}
 
-	public float randrange(float low, float high) {
-		//[low, high)
-		return low + (float) Math.random() * (high - low);
-	}
-	
 	public void render (float delta) {
 		camera.update();
 		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
@@ -68,7 +58,8 @@ public class MainGameScreen extends ScreenAdapter {
 		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
 		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
 
-		hero.collides(platforms); //stops jumping
+		for (Platform platform : platforms)
+			hero.collides(platform); //stops jumping
 		if (hero.isJumping) hero.getRect().y += hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
 		if (hero.getRect().y > MainGravity.HEIGHT)
 			hero.getRect().setY(0);
@@ -79,7 +70,7 @@ public class MainGameScreen extends ScreenAdapter {
  			for (Platform platform : platforms) 
  				render(platform.getImage(), platform.getRect().x, platform.getRect().y, 
  					platform.getRect().width, platform.getRect().height);
- 			chooseTexture();
+ 			hero.chooseTexture();
  			render(hero.currImage, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
 
    		game.batch.end();
@@ -90,58 +81,26 @@ public class MainGameScreen extends ScreenAdapter {
 		game.batch.draw(image, x, y, width, height);
 		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
 	}
-	public void chooseTexture() {
-		System.out.println(hero.direction);
-		if (currLeft != -1)
-			if (hero.direction == Hero.FEET_UP)
-				hero.currImage = hero.moveLeftFlipped[currLeft];
-			else
-				hero.currImage = hero.moveLeft[currLeft];
-		else if (currRight != -1)
-			if (hero.direction == Hero.FEET_UP)
-				hero.currImage = hero.moveRightFlipped[currRight];
-			else
-				hero.currImage = hero.moveRight[currRight];
-		else
-			if (hero.direction == Hero.FEET_UP)
-				hero.currImage = hero.defImageFlipped;
-			else
-				hero.currImage = hero.defImage;
-	}
+
 	public void inputHandler() {
+		boolean animate = false;
+		for (Platform platform : platforms) 
+			if (hero.collides(platform)) {
+				animate = true;
+				break;
+			}	
 		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
- 			hero.moveLeft(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime());
+ 			hero.moveLeft(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
  			if (hero.getRect().x + hero.getRect().width < 0)
  				hero.getRect().setX(MainGravity.WIDTH);
- 			if (hero.collides(platforms)) {
- 				float slInSecs = (System.nanoTime() - sinceLastL) / (float) (Math.pow(10,9));
- 				float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveLeft.length;
- 				if (slInSecs > timePerFrame) {
- 					currLeft = (int)(currLeft + slInSecs / timePerFrame) % 12;
- 					sinceLastL = System.nanoTime();
- 				}
- 			}
- 		} else {
- 			currLeft = -1; //reset animation if hes not moving left
- 			sinceLastL = 0;
  		}
-   		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
- 			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime());
+		else if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
+ 			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
  			if (hero.getRect().x > MainGravity.WIDTH) 
- 				hero.getRect().x = -10;
- 			for (Platform platform : platforms) {
- 				if (hero.collides(platforms)) {
- 					float slInSecs = (System.nanoTime() - sinceLastR) / (float) (Math.pow(10,9));
- 					float timePerFrame = Hero.FRAMES_PER_SECOND / hero.moveRight.length;
- 					if (slInSecs > timePerFrame) {
- 						currRight = (int)(currRight + slInSecs / timePerFrame) % 12;
- 						sinceLastR = System.nanoTime();
- 					}
- 				}
- 			} else {
- 				currRight= -1; //reset animation if hes not moving left
- 				sinceLastR = 0;
- 			}
+				hero.getRect().x = -10;
+ 		}
+ 		else {
+ 			hero.stabilize();
  		}
 
  		if (Gdx.input.isKeyPressed(Keys.UP) || Gdx.input.isKeyPressed(Keys.DOWN)) {
