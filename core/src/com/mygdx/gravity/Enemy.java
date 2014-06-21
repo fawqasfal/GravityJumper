@@ -9,14 +9,11 @@ import com.badlogic.gdx.Gdx;
 public class Enemy {
 	Rectangle rectRep;
 	TextureRegion defImage;
-	int damage;
-	int give;
+	int damage; //what you take in $
+	int give; //what you give in $
 	float velocity;
-	float acceleration = 50f;
-	float slowdown = 0.000002f; 
-	//how long have we been moving in either left/right or up/down. 
-	//every time move in the same direction, add 1 (up/right), or -1 (left/down). 
-	//every time change, set to 1 (up/right) or -1 (left/down)
+	float acceleration = 50f; //the closer the hero is, the faster you move in his direction, but also...
+	float slowdown = 0.000002f;  //the more you retreat in utter shaking anger
 
 	boolean alive; 
 
@@ -26,7 +23,7 @@ public class Enemy {
 	public final static int MAX_DMG = 10;
 	public final static int MIN_GIVE = 50;
 	public final static int MAX_GIVE = 100;
-	public final static float SCALE = 3.5f;
+	public final static float SCALE = 3.5f; //scale up the 16px image to 54 * 54 on the 800*800 board
 	public final static float MOVE_AMT_X = 3f;
 	public final static float MOVE_AMT_Y = 2f;
 	public final static int MAX_X = 0;
@@ -44,29 +41,27 @@ public class Enemy {
 
 	public void die() {
 		this.alive = false;
-		this.rectRep = null;
-		this.defImage = null;
+		this.rectRep = null; //stop colliding and physicsing!
+		this.defImage = null; //stop rendering! 
 	}
 
 	public void move(float amtX, float amtY, Hero hero) {
-		//will angrily shake while trying to reach hero
+		//will angrily shake while trying to reach hero at an accelerating speed
 		this.rectRep.x += amtX;
 		this.rectRep.y += amtY;
-		this.velocity += this.acceleration;
-		this.rectRep.x += slowdown * Math.random() * velocity * (hero.rectRep.x - this.rectRep.x);
+		//amtX and amtY should be random numbers in MainGameScreen.
+		this.velocity += this.acceleration; 
+		//more randomness -- all in the name of anger! 
+		this.rectRep.x += slowdown * Math.random() * velocity * (hero.rectRep.x - this.rectRep.x); 
 		this.rectRep.y += slowdown * Math.random() * velocity * (hero.rectRep.y - this.rectRep.y);
 
 	}
 
 	public boolean collide(Platform platform) {
-		if (this.collide(platform.rectRep)) {
-
-			return true;
-		} else{
-			return false;
-		}
+		return  (this.collide(platform.rectRep));
 	}
 	public boolean collide(Rectangle object) {
+		//this is a classic intersection formula for 2 rectangles that are at reference angles. 
 		boolean intersects = (this.rectRep.x <= object.x + object.width && this.rectRep.x + this.rectRep.width >= object.x && 
 					  this.rectRep.y <= object.y + object.height && this.rectRep.y + this.rectRep.height >= object.y);
 		return intersects;
