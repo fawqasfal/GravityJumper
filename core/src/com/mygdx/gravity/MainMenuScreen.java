@@ -3,7 +3,7 @@ package com.mygdx.gravity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-
+import com.badlogic.gdx.Input.*;
 public class MainMenuScreen extends ScreenAdapter {
 	final MainGravity game;
 	OrthographicCamera camera;
@@ -25,13 +25,13 @@ public class MainMenuScreen extends ScreenAdapter {
 
         game.batch.begin();
         game.font.draw(game.batch, "Welcome to Gravity Jump", (w / 2) - 150, (h / 2) + 100);
-        game.tutFont.draw(game.batch, "Move with left/right, flip your gravity with up/down, punch enemies with Enter.", 
+        game.tutFont.draw(game.batch, "Move with left/right, flip your gravity with up/down, hit enemies with your foot to kill them.", 
             (w / 2) - 360,
             (h / 2) + 50);
-        game.font.draw(game.batch, "CLICK ANYWHERE TO BEGIN", (w / 2) - 150, h / 2);
+        game.font.draw(game.batch, "CLICK ANYWHERE OR PRESS ENTER TO BEGIN", (w / 2) - 175, h / 2);
         game.batch.end();
 
-        if (Gdx.input.isTouched()) {
+        if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Keys.ENTER)) {
         	game.setScreen(new MainGameScreen(game));
         	dispose();
         }
