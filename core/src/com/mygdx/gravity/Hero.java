@@ -13,11 +13,12 @@ public class Hero {
 	boolean isJumping;
 	int vDirection;
 	int hDirection;
-	int coin; 
+	int coin = HEALTH; 
 	int curr = 0;
 	long sinceLast;
 	float velocity = INIT_V;
 
+	public static final int HEALTH = 1000;
 	public static final int FEET_UP = 1;
 	public static final int FEET_DOWN = -1;
 	public static final String DEFAULT_MOVE_LEFT_IMAGE = "leftmove.png";
@@ -28,11 +29,11 @@ public class Hero {
 	public static final int DEFAULT_IMG_HEIGHT = 31;
 	public static final float SCALE = 4.5f;
 	public static final float FRAMES_PER_SECOND = 0.12f;
-	public static final float GRAVITY = 25f;
+	public static final float GRAVITY = 30f;
 	public static final float INIT_V = 0;
 	public static final int LEFT = 1;
 	public static final int RIGHT = 0;
- 	public static final int MOVE_AMT = 300;
+ 	public static final int MOVE_AMT = 600;
 
 	public Hero(float x, float y, float imgX, float imgY, float width, float height, 
 				Texture moveLeftSheet, Texture moveRightSheet) {
@@ -48,33 +49,6 @@ public class Hero {
 		this(spawnX, spawnY, DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_IMG_WIDTH, DEFAULT_IMG_HEIGHT, 
 			new Texture(Gdx.files.internal(DEFAULT_MOVE_LEFT_IMAGE)), 
 			new Texture(Gdx.files.internal(DEFAULT_MOVE_RIGHT_IMAGE)));
-	}
-
-	public TextureRegion[][] setSheets(Texture moveLeftSheet, Texture moveRightSheet) {
-		//breaks sprite sheets into Animations.
-		TextureRegion[] moveLeft = new TextureRegion[12];
-		TextureRegion[] moveRight = new TextureRegion[12];
-		TextureRegion[] moveLeftFlipped = new TextureRegion[12];
-		TextureRegion[] moveRightFlipped = new TextureRegion[12];
-		int l_startX = 0;
-		int r_endX = 0; //idiosyncracies in these specific frames
-		for (int i = 0; i < 12; i++) {
-			if (i >= 2 && i <= 4) l_startX = -1; //idiosyncracies in this specific frame 
-			if (i == 3) r_endX = 1; 
-			moveLeft[i] = new TextureRegion(moveLeftSheet, 32 * i + DEFAULT_START_X + l_startX, DEFAULT_START_Y,
-				DEFAULT_IMG_WIDTH + -1 * l_startX, DEFAULT_IMG_HEIGHT);
-
-			moveLeftFlipped[i] = new TextureRegion(moveLeft[i]);
-			moveLeftFlipped[i].flip(false, true);
-			moveRight[i] = new TextureRegion(moveRightSheet, 32 * i + DEFAULT_START_X + r_endX, DEFAULT_START_Y,
-				DEFAULT_IMG_WIDTH + r_endX, DEFAULT_IMG_HEIGHT);
-
-			moveRightFlipped[i] = new TextureRegion(moveRight[i]);
-			moveRightFlipped[i].flip(false, true);
-		}
-
-		TextureRegion[][] answer = {moveLeft, moveRight, moveLeftFlipped, moveRightFlipped}; 
-		return answer;
 	}
 
 	public void chooseTexture() {
@@ -108,6 +82,10 @@ public class Hero {
  			sinceLast = 0;
 		}
 	}
+
+	public void moveVert(float amt) {
+		this.rectRep.y += amt;
+	}
 	public void stabilize() {
 		this.curr = 0;
 		this.sinceLast = 0;
@@ -125,42 +103,39 @@ public class Hero {
 		return this.velocity;		
 	}
 
-
-	public boolean collides(Rectangle object) {
-		boolean intersects;
-		Rectangle rect = this.rectRep;
-		intersects = (rect.x + rect.width < object.x || object.x + object.width < rect.x 
-			|| object.y + object.height < rect.y || rect.y + rect.height < object.y);
-		return !intersects;
-	}
-
-	public boolean collides(Enemy enemy) {
-		boolean loseCoin  = false;
-		if (this.collides(enemy.rectRep)) {
-			if (this.vDirection * enemy.rectRep.y < this.vDirection * this.rectRep.y)
-				loseCoin = true;
-		}
-		if (loseCoin) loseCoin(enemy.damage);
-		else {
-			gainCoin(enemy.give);
-			enemy.die();
-			//bounce-back
-			this.jump();
-		}
-		return loseCoin;
-	}
-
 	public void gainCoin(int amt) {
 		this.coin += amt;
-		System.out.println(coin);
 	}
 
 	public void loseCoin(int amt) {
 		this.coin -= amt;
-		System.out.println(coin);
 	}
- 	public boolean collides(Platform platform) {
-		if (this.collides(platform.rectRep)) {
+
+	public boolean collide(Rectangle object) {
+		boolean intersects = (this.rectRep.x <= object.x + object.width && this.rectRep.x + this.rectRep.width >= object.x && 
+					  this.rectRep.y <= object.y + object.height && this.rectRep.y + this.rectRep.height >= object.y);
+		return intersects;
+	}
+
+
+	public boolean collide(Enemy enemy) {
+		boolean loseCoin  = true;
+		if (this.collide(enemy.rectRep)) {
+			if ((vDirection == FEET_UP && rectRep.y < enemy.rectRep.y) || 
+				(vDirection == FEET_DOWN && enemy.rectRep.y < rectRep.y))
+				loseCoin = false;
+			if (loseCoin) loseCoin(enemy.damage);
+			else { 
+				gainCoin(enemy.give);
+				this.jump();
+				enemy.die();
+			}
+
+		}
+		return loseCoin;
+	}
+ 	public boolean collide(Platform platform) {
+		if (this.collide(platform.rectRep)) {
 			this.isJumping = false;
 			if (this.vDirection == FEET_UP) {
 				this.rectRep.y = platform.rectRep.y - this.rectRep.height;
@@ -177,5 +152,37 @@ public class Hero {
 	public Rectangle getRect() {
 		//GET WRECKED! 
 		return this.rectRep;
+	}
+
+	public TextureRegion[][] setSheets(Texture moveLeftSheet, Texture moveRightSheet) {
+		//breaks sprite sheet textures into 2darray with flipped sheets as well
+
+		//this whole method breaks my heart. thats why i put it at the bottom. ugly piece of shit. no one likes you. youre at the bottom,
+		//like an untouchable in the ancient indian caste system.
+		// i wish i had more time to implement something more generalizible.
+		//but this game simply doesnt have that scope and im late as it is. 
+		TextureRegion[] moveLeft = new TextureRegion[12];
+		TextureRegion[] moveRight = new TextureRegion[12];
+		TextureRegion[] moveLeftFlipped = new TextureRegion[12];
+		TextureRegion[] moveRightFlipped = new TextureRegion[12];
+		int l_startX = 0;
+		int r_endX = 0; //idiosyncracies in these specific frames
+		for (int i = 0; i < 12; i++) {
+			if (i >= 2 && i <= 4) l_startX = -1; //idiosyncracies in this specific frame 
+			if (i == 3) r_endX = 1; 
+			moveLeft[i] = new TextureRegion(moveLeftSheet, 32 * i + DEFAULT_START_X + l_startX, DEFAULT_START_Y,
+				DEFAULT_IMG_WIDTH + -1 * l_startX, DEFAULT_IMG_HEIGHT);
+
+			moveLeftFlipped[i] = new TextureRegion(moveLeft[i]);
+			moveLeftFlipped[i].flip(false, true);
+			moveRight[i] = new TextureRegion(moveRightSheet, 32 * i + DEFAULT_START_X + r_endX, DEFAULT_START_Y,
+				DEFAULT_IMG_WIDTH + r_endX, DEFAULT_IMG_HEIGHT);
+
+			moveRightFlipped[i] = new TextureRegion(moveRight[i]);
+			moveRightFlipped[i].flip(false, true);
+		}
+
+		TextureRegion[][] answer = {moveLeft, moveRight, moveLeftFlipped, moveRightFlipped}; 
+		return answer;
 	}
 }
