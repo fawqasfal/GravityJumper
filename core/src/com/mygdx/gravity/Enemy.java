@@ -22,8 +22,8 @@ public class Enemy {
 
 	public final static String DEFAULT_IMAGE = "enemy.png";
 	public final static float DEFAULT_SIZE = 16;
-	public final static int MIN_DMG = 5;
-	public final static int MAX_DMG = 10;
+	public final static int MIN_DMG = 6;
+	public final static int MAX_DMG = 11;
 	public final static int MIN_GIVE = 50;
 	public final static int MAX_GIVE = 100;
 	public final static float SCALE = 3.5f;

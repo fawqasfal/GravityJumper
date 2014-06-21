@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
 public class MainGameScreen extends ScreenAdapter {
 	MainGravity game; //has the spritebatch that does the drawing that we will be needing
+	float time;
 	Hero hero; 
 	Music gameMusic; 
 	OrthographicCamera camera;
@@ -20,10 +21,11 @@ public class MainGameScreen extends ScreenAdapter {
 	Array<Enemy> enemies;
 	int w = MainGravity.WIDTH; //dimensions of camera. default set to the dimensions of game screen if player doesnt change it
 	int h = MainGravity.HEIGHT;
-	ShapeRenderer shapeRenderer; 
+	
 	//debugging-renders the game's rectangles (characters without textures) with yellow lines in the bottom 1/8th of the screen  
 
-	public static final int MAX_ENEMY_AMT = 10;
+	public static final int MAX_ENEMY_AMT = 20;
+	public static final int TIME = 297;
 	public static final float ENEMY_DENSITY_RATE = 0.4f;
 	public static final float LEAST_Y = Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE; 
 	public static final float MOST_Y  = MainGravity.HEIGHT - LEAST_Y; 
@@ -34,7 +36,7 @@ public class MainGameScreen extends ScreenAdapter {
    		camera.setToOrtho(false, w, h); 
    		/*false just means render the game world as if the bottom of the screen was 0 and the top of the screen was height, 
    		as opposed to top-down, which is how Rectangles work*/
-   		shapeRenderer = new ShapeRenderer(); 
+
 		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3")); //Music objects auto-loop, as opposed to Sound objects
 		platforms = new Array<Platform>(); //Array is libgdx's "better" ArrayList i guess thats what they say
 		platformSpawner();
@@ -42,6 +44,7 @@ public class MainGameScreen extends ScreenAdapter {
 		hero = new Hero((MainGravity.WIDTH - Hero.DEFAULT_IMG_WIDTH * Hero.SCALE) / 2, 
 						Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE); //spawns hero in the middle on top of a platform
 		//SCALE because DEFAULT_IMAGE_WIDTH deals with the 16x16 sprite sheet, but we want player to see something a bit bigger
+		time = TIME;
 	}
 
 	public void platformSpawner() {
@@ -87,7 +90,7 @@ public class MainGameScreen extends ScreenAdapter {
 	}
 
 	public void tooFarCheck(Rectangle x) {
-		if (x.y > MainGravity.HEIGHT)
+		if (x.y >= MainGravity.HEIGHT)
 			x.y = 0;
 		if (x.y < 0)
 			x.y = MainGravity.HEIGHT;
@@ -102,9 +105,6 @@ public class MainGameScreen extends ScreenAdapter {
 		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); //something OpenGL needs to do, who knows
 		game.batch.setProjectionMatrix(camera.combined); //something for going from GPU's color-bit matrices to pixels on screen?
-		shapeRenderer.setProjectionMatrix(camera.combined); 
-		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
-		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
 	}
 
 	public void renderObjects() {
@@ -120,11 +120,13 @@ public class MainGameScreen extends ScreenAdapter {
  			String money = new String();
  			if  (hero.coin < 0) money = "(DEBT!)";
  			game.font.draw(game.batch,"MONEY : " + hero.coin + money, 0f, MainGravity.HEIGHT - 50f);
+ 			game.font.draw(game.batch, "TIME : " + String.format("%.1f",time), 0f, MainGravity.HEIGHT - 100f);
    		game.batch.end();
-		shapeRenderer.end();
+
 	}
 
 	public void render(float delta) {
+		updateTime();
 		inputHandler();
 		enemySpawner();
 		handleMovement();
@@ -134,11 +136,16 @@ public class MainGameScreen extends ScreenAdapter {
 		renderObjects();
 	}
 
+	public void updateTime() {
+		time -= Gdx.graphics.getDeltaTime();
+		if (time <= 0) {
+			gameMusic.stop();
+			game.setScreen(new GameOverScreen(game, hero.coin));
+		}
+	}
 	public void render(TextureRegion image, float x, float y, float width, float height) {
-		//renders to spritebatch and debugger
+		//renders to spritebatch and debugger 
 		game.batch.draw(image, x, y, width, height);
-		shapeRenderer.rect((x * DEBUG_SIZE_CONSTANT), (y * DEBUG_SIZE_CONSTANT), 
-						   (width * DEBUG_SIZE_CONSTANT), (height  * DEBUG_SIZE_CONSTANT)); 
 	}
 
 	public boolean should_animate() {
@@ -178,7 +185,8 @@ public class MainGameScreen extends ScreenAdapter {
 	public void show() {
 	    // start the playback of the background music
 	    // when the screen is shown
-	    //gameMusic.play(); -- commented out because im listening to led zeppelin now
+	    gameMusic.play(); 
+	    gameMusic.setLooping(true);
 	}
 
 }

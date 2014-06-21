@@ -20,6 +20,7 @@ core/build/*
 gradle.*
 gradlew
 gradlew.*
+/gradle
 /build
 /out
 /intTestHomeDir
