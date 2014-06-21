@@ -7,8 +7,8 @@ import com.badlogic.gdx.Input.*;
 public class MainMenuScreen extends ScreenAdapter {
 	final MainGravity game;
 	OrthographicCamera camera;
-    static int w = MainGravity.WIDTH;
-    static int h = MainGravity.HEIGHT;
+    	static int w = MainGravity.WIDTH;
+    	static int h = MainGravity.HEIGHT;
 
 	public MainMenuScreen(MainGravity game) {
 		this.game = game;
