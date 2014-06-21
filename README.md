@@ -12,7 +12,7 @@ clean up a really ugly method in Hero (setSheets for sprite sheet animation brea
 
 to SEE CODE and RUN GAME : all the code is in master and the runnable game is GRAVITY_JUMP.jar.
 
-to BUILD GAME : go to the build branch and run "sudo ./gradlew desktop:run", assuming youre on -nix. dont know what the unix command is for windows but it probaaably has something to do with gradlew.bat. 
+to BUILD GAME : go to the build branch and run "sudo ./gradlew desktop:run", assuming youre on -nix. dont know what the equiv command is for windows but it probaaably has something to do with gradlew.bat. 
 
 to build the jar yourself : "sudo ./gradlew desktop:dist" then the jar is in desktop/build/libs/desktop-1.0.jar
 
