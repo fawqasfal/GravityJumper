@@ -24,10 +24,8 @@ public class Enemy {
 	public final static int MIN_GIVE = 50;
 	public final static int MAX_GIVE = 100;
 	public final static float SCALE = 3.5f; //scale up the 16px image to 54 * 54 on the 800*800 board
-	public final static float MOVE_AMT_X = 3f;
-	public final static float MOVE_AMT_Y = 2f;
-	public final static int MAX_X = 0;
-	public final static int MAX_Y = 0;
+	public final static float MOVE_AMT_X = 20f;
+	public final static float MOVE_AMT_Y = 10f;
 
 	public Enemy(float spawnX, float spawnY, int dmg, int give) {
 		//It takes a nation of millions to hold us back.
