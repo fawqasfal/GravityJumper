@@ -10,6 +10,7 @@ make the platform more intricate (thats why you see a 64x64 in the assets folder
 
 clean up a really ugly method in Hero (setSheets for sprite sheet animation breakdown) that was not generalizible at all and relied on hard-coded idiosyncacries. we wanted to make a "SheetHelper" class that took a Texture and an idiosyncacries[][] array and dealt with the texture with those idiosyncacries. again, we figured there was not enough time to expand the game to that point anyways and just made sure that our enemy sprite didnt have animations so we wouldnt have to rewrite that method again.
 
+--------
 to SEE CODE and RUN GAME : all the code is in master and the runnable game is GRAVITY_JUMP.jar.
 
 to BUILD GAME : go to the build branch and run "sudo ./gradlew desktop:run", assuming youre on -nix. dont know what the equiv command is for windows but it probaaably has something to do with gradlew.bat. 
