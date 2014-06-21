@@ -9,17 +9,17 @@ import com.badlogic.gdx.utils.*;
 public class Hero {
 	Rectangle rectRep;
 	TextureRegion[][] textureRegions; //moveLeft, moveRight, moveLeftFlipped, moveRightFlipped 
-	TextureRegion currImage; 
+	TextureRegion currImage; //what to render right now?
 	boolean isJumping;
-	int vDirection;
-	int hDirection;
-	int coin = HEALTH; 
-	int curr = 0;
+	int vDirection; //direction youre moving up/down
+	int hDirection; //direction youre move left/right
+	int coin = HEALTH; //HEALTH being your original wallet amt. 
+	int curr = 0; //current frame index in the textureRegion[] index. 
 	long sinceLast;
 	float velocity = INIT_V;
 
 	public static final int HEALTH = 1000;
-	public static final int FEET_UP = 1;
+	public static final int FEET_UP = 1; //vertical direction
 	public static final int FEET_DOWN = -1;
 	public static final String DEFAULT_MOVE_LEFT_IMAGE = "leftmove.png";
 	public static final String DEFAULT_MOVE_RIGHT_IMAGE = "rightmove.png";
@@ -28,7 +28,7 @@ public class Hero {
 	public static final int DEFAULT_IMG_WIDTH = 18; //extra 7 pixels of nothing on the right and left : 32 - 7 * 2
 	public static final int DEFAULT_IMG_HEIGHT = 31;
 	public static final float SCALE = 4.5f;
-	public static final float FRAMES_PER_SECOND = 0.12f;
+	public static final float FRAMES_PER_SECOND = 0.12f; //how much time to spend on the whole set of frames
 	public static final float GRAVITY = 30f;
 	public static final float INIT_V = 0;
 	public static final int LEFT = 1;
@@ -55,39 +55,36 @@ public class Hero {
 			this.currImage = this.textureRegions[this.vDirection + this.hDirection + 1][curr];
 	}
 	public void animate() {
-		float slInSecs = (System.nanoTime() - sinceLast) / (float) (Math.pow(10,9));
- 		float timePerFrame = Hero.FRAMES_PER_SECOND / textureRegions[LEFT].length; //specifically choosing moveleft is arbitrary
+		float slInSecs = (System.nanoTime() - sinceLast) / (float) (Math.pow(10,9)); //time since last frame in secs
+ 		float timePerFrame = Hero.FRAMES_PER_SECOND / textureRegions[LEFT].length; 
+ 		//specifically choosing moveleft is arbitrary, since theyre all the same : 12 frames 
  		if (slInSecs > timePerFrame) {
  			curr = ((int)(curr + slInSecs / timePerFrame)) % textureRegions[LEFT].length;
- 			sinceLast = System.nanoTime();
+ 			//find the difference in time relative to how much time you should spend in time per frame,
+ 			//add curr to that, then the mod takes care of looping from 0-12. 
+ 			sinceLast = System.nanoTime(); //update sinceLast
  		}
 	}
 	public void moveLeft(float amt, boolean animate) {
 		this.hDirection = LEFT;
 		this.rectRep.x -= amt;
-		if (animate) animate();
-		else {
-			curr = 0;
-			sinceLast = 0;
-		}
+		if (animate) animate(); //whether you should animate the movement or if the character is mid-jump 
+		else stabilize();
 	}
 
 	public void moveRight(float amt, boolean animate) {
-		//animate would be false in case of : collision with enemy, NOT colliding with platform
 		this.hDirection = RIGHT;
 		this.rectRep.x += amt;
 		if (animate) animate();
-		 else {
- 			curr = 0; //reset animation 
- 			sinceLast = 0;
-		}
+		 else stabilize();
 	}
 
 	public void moveVert(float amt) {
 		this.rectRep.y += amt;
 	}
 	public void stabilize() {
-		this.curr = 0;
+		//stop moving!
+		this.curr = 0; //reset animation indices
 		this.sinceLast = 0;
 	}
 
