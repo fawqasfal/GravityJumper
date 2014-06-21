@@ -5,107 +5,171 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.audio.*;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.Input.*;;
+import com.badlogic.gdx.Input.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer; 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
 public class MainGameScreen extends ScreenAdapter {
-	MainGravity game;
-	Texture bgImage;
-	Texture platform;
-	Hero hero;
-	Music gameMusic;
+	MainGravity game; //has the spritebatch that does the drawing that we will be needing
+	Hero hero; 
+	Music gameMusic; 
 	OrthographicCamera camera;
-	public static Array<Platform> platforms; 
-	int w = MainGravity.WIDTH;
+	Array<Platform> platforms; 
+	Array<Enemy> enemies;
+	int w = MainGravity.WIDTH; //dimensions of camera. default set to the dimensions of game screen if player doesnt change it
 	int h = MainGravity.HEIGHT;
-	ShapeRenderer shapeRenderer; //debugging purposes
-	
+	ShapeRenderer shapeRenderer; 
+	//debugging-renders the game's rectangles (characters without textures) with yellow lines in the bottom 1/8th of the screen  
+
+	public static final int MAX_ENEMY_AMT = 10;
+	public static final float ENEMY_DENSITY_RATE = 0.4f;
+	public static final float LEAST_Y = Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE; 
+	public static final float MOST_Y  = MainGravity.HEIGHT - LEAST_Y; 
+	public static final float DEBUG_SIZE_CONSTANT = 0.25f;
 	public MainGameScreen(MainGravity game) {
-		this.game = game; //has the spritebatch that does the drawing that we will be needing
-
-		camera = new OrthographicCamera(); //p.o.v of game world
+		this.game = game; 
+		camera = new OrthographicCamera(); 
    		camera.setToOrtho(false, w, h); 
-   		/*false just means that highest point of camera-world = h and lowest point = 0, instead of the other way around as it was
-   		with TextureRegions*/
-
-   		shapeRenderer = new ShapeRenderer(); //renders the rectangle objects as opposed to textures. for debugging
-	
-		//sound
-		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));		
-		//platforms
-		platforms = new Array<Platform>();
-		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) {
-			platforms.add(new Platform(i,0));
-			platforms.add(new Platform(i, MainGravity.HEIGHT - Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE));
-		}
-
-		//hero
-		hero = new Hero(0, platforms.get(0).getRect().height);
-
+   		/*false just means render the game world as if the bottom of the screen was 0 and the top of the screen was height, 
+   		as opposed to top-down, which is how Rectangles work*/
+   		shapeRenderer = new ShapeRenderer(); 
+		gameMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3")); //Music objects auto-loop, as opposed to Sound objects
+		platforms = new Array<Platform>(); //Array is libgdx's "better" ArrayList i guess thats what they say
+		platformSpawner();
+		enemies = new Array<Enemy>();
+		hero = new Hero((MainGravity.WIDTH - Hero.DEFAULT_IMG_WIDTH * Hero.SCALE) / 2, 
+						Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE); //spawns hero in the middle on top of a platform
+		//SCALE because DEFAULT_IMAGE_WIDTH deals with the 16x16 sprite sheet, but we want player to see something a bit bigger
 	}
 
-	public void render (float delta) {
-		camera.update();
+	public void platformSpawner() {
+		for (int i = 0; i < w; i += Platform.DEFAULT_IMAGE_WIDTH * Platform.SCALE) { 
+			platforms.add(new Platform(i,0));
+			platforms.add(new Platform(i, MainGravity.HEIGHT - Platform.DEFAULT_IMAGE_HEIGHT * Platform.SCALE)); //top of screen
+		}
+	}
+
+	public void birthEnemy(float leastX, float mostX, float leastY, float mostY) {
+		float spawnX = leastX + new Random().nextFloat() * (mostX - leastX);
+		float spawnY = leastY + new Random().nextFloat() * (mostY - leastY);
+
+		int damage = Enemy.MIN_DMG + new Random().nextInt(Enemy.MAX_DMG - Enemy.MIN_DMG);
+		int give = Enemy.MIN_GIVE + new Random().nextInt(Enemy.MAX_GIVE - Enemy.MIN_GIVE);
+	
+		Enemy newBaby = new Enemy(spawnX, spawnY, damage, give);
+
+		enemies.add(newBaby);
+	}
+
+	public void enemySpawner() {
+		if (enemies.size < MAX_ENEMY_AMT && Math.random() < ENEMY_DENSITY_RATE)
+			birthEnemy(0, MainGravity.WIDTH, LEAST_Y, MOST_Y);
+	}
+
+	public void handleCollisions() {
+		 for (Platform platform : platforms)
+			hero.collide(platform); //stops jumping
+		for (Enemy enemy : enemies) {
+				hero.collide(enemy); //gets or loses health
+				if (!enemy.alive)
+					enemies.removeValue(enemy, true);
+		}
+	}
+
+	public void tooFarCheck() {
+		//if objects moves too far right, loop him back to the left side of screen. same with up/down
+		for (Enemy enemy : enemies) {
+				tooFarCheck(enemy.rectRep);
+		}
+		tooFarCheck(hero.rectRep);
+	}
+
+	public void tooFarCheck(Rectangle x) {
+		if (x.y > MainGravity.HEIGHT)
+			x.y = 0;
+		if (x.y < 0)
+			x.y = MainGravity.HEIGHT;
+		if (x.x > MainGravity.WIDTH)
+			x.x = 0; 
+		if (x.x + x.width < 0)
+			x.x = MainGravity.WIDTH; //offset to make it look prettier
+	}
+
+	public void renderSetup() {
+		camera.update(); //every frame
 		Gdx.gl.glClearColor(135f / 255f, 206f / 255f, 250f / 255f, 1); //sky blue
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); //something OpenGL needs to do, who knows
- 		inputHandler();
-		game.batch.setProjectionMatrix(camera.combined);
+		game.batch.setProjectionMatrix(camera.combined); //something for going from GPU's color-bit matrices to pixels on screen?
 		shapeRenderer.setProjectionMatrix(camera.combined); 
-		//something for going from GPU's color-bit matrices to pixels on screen? or something
 		shapeRenderer.begin(ShapeType.Line); //ShapeType.Line vs ShapeType.Fill
 		shapeRenderer.setColor(1, 1, 0, 1); //yellow debug outer lines on the rects	
+	}
 
-		for (Platform platform : platforms)
-			hero.collides(platform); //stops jumping
-		if (hero.isJumping) hero.getRect().y += hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime();
-		if (hero.getRect().y > MainGravity.HEIGHT)
-			hero.getRect().setY(0);
-		if (hero.getRect().y < 0)
-			hero.getRect().setY(MainGravity.HEIGHT + hero.getRect().height);
-
+	public void renderObjects() {
  		game.batch.begin();
  			for (Platform platform : platforms) 
  				render(platform.getImage(), platform.getRect().x, platform.getRect().y, 
  					platform.getRect().width, platform.getRect().height);
+ 			
  			hero.chooseTexture();
  			render(hero.currImage, hero.getRect().x, hero.getRect().y, hero.getRect().width, hero.getRect().height);
-
+ 			for (Enemy enemy : enemies)
+ 					render(enemy.defImage, enemy.rectRep.x, enemy.rectRep.y, enemy.rectRep.width, enemy.rectRep.height);
+ 			String money = new String();
+ 			if  (hero.coin < 0) money = "(DEBT!)";
+ 			game.font.draw(game.batch,"MONEY : " + hero.coin + money, 0f, MainGravity.HEIGHT - 50f);
    		game.batch.end();
 		shapeRenderer.end();
 	}
 
-	public void render(TextureRegion image, float x, float y, float width, float height) {
-		game.batch.draw(image, x, y, width, height);
-		shapeRenderer.rect((x / 4), (y / 4), (width / 4), (height / 4)); //debug render is in the bottom left, at 1/8th the size
+	public void render(float delta) {
+		inputHandler();
+		enemySpawner();
+		handleMovement();
+		handleCollisions();
+		tooFarCheck();
+		renderSetup();
+		renderObjects();
 	}
 
-	public void inputHandler() {
+	public void render(TextureRegion image, float x, float y, float width, float height) {
+		//renders to spritebatch and debugger
+		game.batch.draw(image, x, y, width, height);
+		shapeRenderer.rect((x * DEBUG_SIZE_CONSTANT), (y * DEBUG_SIZE_CONSTANT), 
+						   (width * DEBUG_SIZE_CONSTANT), (height  * DEBUG_SIZE_CONSTANT)); 
+	}
+
+	public boolean should_animate() {
 		boolean animate = false;
 		for (Platform platform : platforms) 
-			if (hero.collides(platform)) {
+			if (hero.collide(platform)) {
 				animate = true;
 				break;
-			}	
-		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
- 			hero.moveLeft(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
- 			if (hero.getRect().x + hero.getRect().width < 0)
- 				hero.getRect().setX(MainGravity.WIDTH);
- 		}
-		else if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
- 			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
- 			if (hero.getRect().x > MainGravity.WIDTH) 
-				hero.getRect().x = -10;
- 		}
- 		else {
- 			hero.stabilize();
- 		}
+			}
+		return animate;
+	}
+	public void handleMovement() {
+		if (hero.isJumping) 
+			hero.moveVert(hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime()); //time since last frame
+		for (Enemy enemy : enemies) {
+			enemy.move((-0.5f + (float)Math.random()) * 20f, (-0.5f + (float)Math.random()) * 10f, hero);
 
- 		if (Gdx.input.isKeyPressed(Keys.UP) || Gdx.input.isKeyPressed(Keys.DOWN)) {
+		}
+	}
+	public void inputHandler() {	
+		boolean animate = should_animate();
+		if(Gdx.input.isKeyPressed(Keys.A)) 
+ 			hero.moveLeft(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
+		else if(Gdx.input.isKeyPressed(Keys.D)) 
+ 			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
+ 		else 
+ 			hero.stabilize();
+
+ 		if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.S)) 
  			if (!hero.isJumping) hero.jump();
- 		}
+ 		
 	}
 	public void dispose() {
 	     game.batch.dispose();
