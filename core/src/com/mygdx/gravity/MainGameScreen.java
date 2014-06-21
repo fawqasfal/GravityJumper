@@ -87,6 +87,7 @@ public class MainGameScreen extends ScreenAdapter {
 	}
 
 	public void tooFarCheck(Rectangle x) {
+		//loop around
 		if (x.y > MainGravity.HEIGHT)
 			x.y = 0;
 		if (x.y < 0)
@@ -118,7 +119,7 @@ public class MainGameScreen extends ScreenAdapter {
  			for (Enemy enemy : enemies)
  					render(enemy.defImage, enemy.rectRep.x, enemy.rectRep.y, enemy.rectRep.width, enemy.rectRep.height);
  			String money = new String();
- 			if  (hero.coin < 0) money = "(DEBT!)";
+ 			if  (hero.coin < 0) money = "(DEBT!)"; //enemies can steal your debt to put you in more debt
  			game.font.draw(game.batch,"MONEY : " + hero.coin + money, 0f, MainGravity.HEIGHT - 50f);
    		game.batch.end();
 		shapeRenderer.end();
@@ -145,7 +146,7 @@ public class MainGameScreen extends ScreenAdapter {
 		boolean animate = false;
 		for (Platform platform : platforms) 
 			if (hero.collide(platform)) {
-				animate = true;
+				animate = true; //if the hero is moving on a platform, animate
 				break;
 			}
 		return animate;
@@ -154,7 +155,8 @@ public class MainGameScreen extends ScreenAdapter {
 		if (hero.isJumping) 
 			hero.moveVert(hero.jumpIter(Hero.GRAVITY) * Gdx.graphics.getDeltaTime()); //time since last frame
 		for (Enemy enemy : enemies) {
-			enemy.move((-0.5f + (float)Math.random()) * 20f, (-0.5f + (float)Math.random()) * 10f, hero);
+			//follow the hero! ugly line :(
+			enemy.move((-0.5f + (float)Math.random()) * Enemy.MOVE_X, (-0.5f + (float)Math.random()) * Enemy.MOVE_Y, hero);
 
 		}
 	}
@@ -165,20 +167,21 @@ public class MainGameScreen extends ScreenAdapter {
 		else if(Gdx.input.isKeyPressed(Keys.D)) 
  			hero.moveRight(Hero.MOVE_AMT * Gdx.graphics.getDeltaTime(), animate);
  		else 
- 			hero.stabilize();
+ 			hero.stabilize(); //not moving
 
  		if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.S)) 
  			if (!hero.isJumping) hero.jump();
  		
 	}
 	public void dispose() {
-	     game.batch.dispose();
+	     game.batch.dispose(); //free graphical resources
 	}
 	
 	public void show() {
 	    // start the playback of the background music
 	    // when the screen is shown
-	    //gameMusic.play(); -- commented out because im listening to led zeppelin now
+	    gameMusic.play(); 
+	    gameMusic.setLooping(true);
 	}
 
 }
