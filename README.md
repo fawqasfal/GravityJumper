@@ -1,8 +1,3 @@
-APCS final project
-
-
-initially this whole game was supposed to be much more like doodlejump where you moved up the game screen and went through infinitely randomly spawning platforms and faced enemies in varying difficulties. however by the time i had a page full in my composition notebook trying to find an optimized algorithm for procedural generation of platform size, platform length, enemies, etc. such that the game was A) always possible to beat and B) fun, i figured we were already kind of late and should start getting stuff on screen. we then kept building on "getting stuff on screen" until we got where we are now, which is  :
-
 ------- 
 GAME DETAILS
 ============
